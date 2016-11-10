@@ -33,7 +33,7 @@ public class PullLoadMoreRecyclerView extends LinearLayout {
     private Context mContext;
     private TextView loadMoreText;
     private LinearLayout loadMoreLayout;
-    private AdapterDataObserver mEmptyDataObserver;
+    private EmptyAdapterDataObserver mEmptyDataObserver;
 
     public PullLoadMoreRecyclerView(Context context) {
         super(context);
@@ -47,12 +47,12 @@ public class PullLoadMoreRecyclerView extends LinearLayout {
 
     private void initView(Context context) {
         mContext = context;
-        View view = LayoutInflater.from(context).inflate(com.tribe7.pullloadmorerecyclerview.R.layout.pull_loadmore_layout, null);
-        mSwipeRefreshLayout = (SwipeRefreshLayout) view.findViewById(com.tribe7.pullloadmorerecyclerview.R.id.swipeRefreshLayout);
+        View view = LayoutInflater.from(context).inflate(R.layout.pull_loadmore_layout, null);
+        mSwipeRefreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.swipeRefreshLayout);
         mSwipeRefreshLayout.setColorSchemeResources(android.R.color.holo_green_dark, android.R.color.holo_blue_dark, android.R.color.holo_orange_dark);
         mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayoutOnRefresh(this));
 
-        mRecyclerView = (RecyclerView) view.findViewById(com.tribe7.pullloadmorerecyclerview.R.id.recycler_view);
+        mRecyclerView = (RecyclerView) view.findViewById(R.id.recycler_view);
         mRecyclerView.setVerticalScrollBarEnabled(true);
 
         mRecyclerView.setHasFixedSize(true);
@@ -69,8 +69,11 @@ public class PullLoadMoreRecyclerView extends LinearLayout {
 
         mFooterView.setVisibility(View.GONE);
         mEmptyViewContainer.setVisibility(View.GONE);
+
         this.addView(view);
+
     }
+
 
     /**
      * LinearLayoutManager
@@ -84,7 +87,9 @@ public class PullLoadMoreRecyclerView extends LinearLayout {
     /**
      * GridLayoutManager
      */
+
     public void setGridLayout(int spanCount) {
+
         GridLayoutManager gridLayoutManager = new GridLayoutManager(mContext, spanCount);
         gridLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
         mRecyclerView.setLayoutManager(gridLayoutManager);
@@ -94,6 +99,7 @@ public class PullLoadMoreRecyclerView extends LinearLayout {
     /**
      * StaggeredGridLayoutManager
      */
+
     public void setStaggeredGridLayout(int spanCount) {
         StaggeredGridLayoutManager staggeredGridLayoutManager =
                 new StaggeredGridLayoutManager(spanCount, LinearLayoutManager.VERTICAL);
@@ -129,37 +135,30 @@ public class PullLoadMoreRecyclerView extends LinearLayout {
         mEmptyViewContainer.addView(emptyView);
     }
 
-    public void showEmptyView() {
-
-        RecyclerView.Adapter<?> adapter = mRecyclerView.getAdapter();
-        if (adapter != null && mEmptyViewContainer.getChildCount() != 0) {
-            if (adapter.getItemCount() == 0) {
-                mFooterView.setVisibility(View.GONE);
-                mEmptyViewContainer.setVisibility(VISIBLE);
-            } else {
-                mEmptyViewContainer.setVisibility(GONE);
-            }
-        }
-    }
 
     public void setAdapter(RecyclerView.Adapter adapter) {
+        if (mEmptyDataObserver == null) {
+            mEmptyDataObserver = new EmptyAdapterDataObserver();
+        }
+        RecyclerView.Adapter oldAdapter = mRecyclerView.getAdapter();
+        if (oldAdapter != null) {
+            oldAdapter.unregisterAdapterDataObserver(mEmptyDataObserver);
+        }
         if (adapter != null) {
             mRecyclerView.setAdapter(adapter);
             showEmptyView();
-            if (mEmptyDataObserver == null) {
-                mEmptyDataObserver = new AdapterDataObserver();
-            }
             adapter.registerAdapterDataObserver(mEmptyDataObserver);
         }
     }
 
-    @Override
-    protected void onAttachedToWindow() {
-        super.onAttachedToWindow();
-        if (mEmptyDataObserver != null) {
-            RecyclerView.Adapter<?> adapter = mRecyclerView.getAdapter();
-            if (adapter != null) {
-                adapter.registerAdapterDataObserver(mEmptyDataObserver);
+    public void showEmptyView() {
+        RecyclerView.Adapter oldAdapter = mRecyclerView.getAdapter();
+        if (oldAdapter != null && mEmptyViewContainer.getChildCount() != 0) {
+            if (oldAdapter.getItemCount() == 0) {
+                mFooterView.setVisibility(View.GONE);
+                mEmptyViewContainer.setVisibility(VISIBLE);
+            } else {
+                mEmptyViewContainer.setVisibility(GONE);
             }
         }
     }
@@ -170,9 +169,9 @@ public class PullLoadMoreRecyclerView extends LinearLayout {
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-        RecyclerView.Adapter<?> adapter = mRecyclerView.getAdapter();
-        if (adapter != null) {
-            adapter.unregisterAdapterDataObserver(mEmptyDataObserver);
+        RecyclerView.Adapter oldAdapter = mRecyclerView.getAdapter();
+        if (oldAdapter != null) {
+            oldAdapter.unregisterAdapterDataObserver(mEmptyDataObserver);
         }
     }
 
@@ -181,24 +180,13 @@ public class PullLoadMoreRecyclerView extends LinearLayout {
      * When adapter's item count greater than 0 and empty view has been set,then show the empty view.
      * when adapter's item count is 0 ,then empty view hide.
      */
-    private class AdapterDataObserver extends android.support.v7.widget.RecyclerView.AdapterDataObserver {
+    private class EmptyAdapterDataObserver extends android.support.v7.widget.RecyclerView.AdapterDataObserver {
         @Override
         public void onChanged() {
             showEmptyView();
         }
-
-        @Override
-        public void onItemRangeInserted(int positionStart, int itemCount) {
-            super.onItemRangeInserted(positionStart, itemCount);
-            showEmptyView();
-        }
-
-        @Override
-        public void onItemRangeRemoved(int positionStart, int itemCount) {
-            super.onItemRangeRemoved(positionStart, itemCount);
-            showEmptyView();
-        }
     }
+
 
     public void setPullRefreshEnable(boolean enable) {
         pullRefreshEnable = enable;
@@ -220,6 +208,7 @@ public class PullLoadMoreRecyclerView extends LinearLayout {
 
     public void setColorSchemeResources(int... colorResIds) {
         mSwipeRefreshLayout.setColorSchemeResources(colorResIds);
+
     }
 
     public SwipeRefreshLayout getSwipeRefreshLayout() {
@@ -235,7 +224,9 @@ public class PullLoadMoreRecyclerView extends LinearLayout {
                     mSwipeRefreshLayout.setRefreshing(isRefreshing);
             }
         });
+
     }
+
 
     /**
      * Solve IndexOutOfBoundsException exception
@@ -313,6 +304,7 @@ public class PullLoadMoreRecyclerView extends LinearLayout {
                 .setDuration(300)
                 .setInterpolator(new AccelerateDecelerateInterpolator())
                 .start();
+
     }
 
 
@@ -347,6 +339,7 @@ public class PullLoadMoreRecyclerView extends LinearLayout {
 
     public interface PullLoadMoreListener {
         void onRefresh();
+
         void onLoadMore();
     }
 }
